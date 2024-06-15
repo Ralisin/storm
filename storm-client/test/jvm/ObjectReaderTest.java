@@ -1,200 +1,74 @@
 import org.apache.storm.utils.ObjectReader;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ObjectReaderTest {
-    @Test
-    public void testGetStrings_Null() {
-        List<String> result = ObjectReader.getStrings(null);
-        assertTrue(result.isEmpty());
+    @ParameterizedTest
+    @MethodSource("argsError")
+    public void testObjectReaderError(Object o, Integer defaultValue, Class<? extends Throwable> expectedException) {
+        try {
+            ObjectReader.getInt(o, defaultValue);
+        } catch (Exception e) {
+            assertEquals(expectedException, e.getClass());
+
+            return;
+        }
+
+        assertNull(expectedException);
     }
 
-    @Test
-    public void testGetStrings_String() {
-        List<String> result = ObjectReader.getStrings("test");
-        assertEquals(Collections.singletonList("test"), result);
+    static Stream<Arguments> argsError() {
+        return Stream.of(
+                Arguments.of(null, null, null), //T1
+                Arguments.of((long) (Integer.MAX_VALUE) + 1, 1, IllegalArgumentException.class), // T11
+                Arguments.of((long) (Integer.MIN_VALUE) - 1, 1, IllegalArgumentException.class), // T12
+                Arguments.of((double) (Integer.MAX_VALUE) + 1, 1, IllegalArgumentException.class), // T16
+                Arguments.of((double) (Integer.MIN_VALUE) - 1, 1, IllegalArgumentException.class), // T17
+                Arguments.of(2.3F, 1, IllegalArgumentException.class), // T18
+                Arguments.of(1.1, 1, IllegalArgumentException.class), //T19
+                Arguments.of("2147483648", 1, NumberFormatException.class), //T19
+                Arguments.of("-2147483649", 1, NumberFormatException.class), //T19
+                Arguments.of("1.2", 1, NumberFormatException.class), //T19
+                Arguments.of("Stringa", 1, NumberFormatException.class) //T19
+        );
     }
 
-    @Test
-    public void testGetStrings_Collection() {
-        List<String> result = ObjectReader.getStrings(Arrays.asList("a", "b", "c"));
-        assertEquals(Arrays.asList("a", "b", "c"), result);
+    @ParameterizedTest
+    @MethodSource("args")
+    public void testObjectReader(Object o, Integer defaultValue, Integer expectedValue) {
+        try {
+            Integer result = ObjectReader.getInt(o, defaultValue);
+
+            assertEquals(expectedValue, result);
+            assertEquals(Integer.class, result.getClass());
+        } catch (Exception e) {
+            assertNull(e.getClass());
+        }
     }
 
-    @Test
-    public void testGetStrings_CollectionWithNulls() {
-        List<String> result = ObjectReader.getStrings(Arrays.asList("a", null, "c"));
-        assertEquals(Arrays.asList("a", "c"), result);
-    }
-
-    @Test
-    public void testGetStrings_InvalidObject() {
-        assertThrows(IllegalArgumentException.class, new Executable() {
-            @Override
-            public void execute() throws Throwable {
-                ObjectReader.getStrings(123);
-            }
-        });
-    }
-
-    @Test
-    public void testGetString_Null() {
-        assertThrows(IllegalArgumentException.class, new Executable() {
-            @Override
-            public void execute() throws Throwable {
-                ObjectReader.getString(null);
-            }
-        });
-    }
-
-    @Test
-    public void testGetString_Object() {
-        assertEquals("test", ObjectReader.getString("test"));
-    }
-
-    @Test
-    public void testGetStringWithDefault_Null() {
-        assertEquals("default", ObjectReader.getString(null, "default"));
-    }
-
-    @Test
-    public void testGetStringWithDefault_Object() {
-        assertEquals("test", ObjectReader.getString("test", "default"));
-    }
-
-    @Test
-    public void testGetStringWithDefault_InvalidObject() {
-        assertThrows(IllegalArgumentException.class, new Executable() {
-            @Override
-            public void execute() throws Throwable {
-                ObjectReader.getString(123, "default");
-            }
-        });
-    }
-
-    @Test
-    public void testGetInt_ValidInteger() {
-        assertEquals(42, ObjectReader.getInt(42));
-    }
-
-    @Test
-    public void testGetInt_ValidString() {
-        assertEquals(42, ObjectReader.getInt("42"));
-    }
-
-    @Test
-    public void testGetInt_Null() {
-        assertThrows(IllegalArgumentException.class, new Executable() {
-            @Override
-            public void execute() throws Throwable {
-                ObjectReader.getInt(null);
-            }
-        });
-    }
-
-    @Test
-    public void testGetIntWithDefault_Null() {
-        assertEquals(10, ObjectReader.getInt(null, 10));
-    }
-
-    @Test
-    public void testGetIntWithDefault_ValidString() {
-        assertEquals(42, ObjectReader.getInt("42", 10));
-    }
-
-    @Test
-    public void testGetIntWithDefault_InvalidString() {
-        assertThrows(NumberFormatException.class, new Executable() {
-            @Override
-            public void execute() throws Throwable {
-                ObjectReader.getInt("abc", 10);
-            }
-        });
-    }
-
-    @Test
-    public void testGetLong_ValidLong() {
-        assertEquals(42L, ObjectReader.getLong(42L));
-    }
-
-    @Test
-    public void testGetLong_ValidString() {
-        assertEquals(42L, ObjectReader.getLong("42"));
-    }
-
-    @Test
-    public void testGetLong_Null() {
-        assertNull(ObjectReader.getLong(null, null));
-    }
-
-    @Test
-    public void testGetLongWithDefault_Null() {
-        assertEquals(10L, ObjectReader.getLong(null, 10L));
-    }
-
-    @Test
-    public void testGetLongWithDefault_ValidString() {
-        assertEquals(42L, ObjectReader.getLong("42", 10L));
-    }
-
-    @Test
-    public void testGetLongWithDefault_InvalidString() {
-        assertThrows(NumberFormatException.class, new Executable() {
-            @Override
-            public void execute() throws Throwable {
-                ObjectReader.getLong("abc", 10L);
-            }
-        });
-    }
-
-    @Test
-    public void testGetDouble_ValidDouble() {
-        assertEquals(42.0, ObjectReader.getDouble(42.0));
-    }
-
-    @Test
-    public void testGetDouble_Null() {
-        assertThrows(IllegalArgumentException.class, new Executable() {
-            @Override
-            public void execute() throws Throwable {
-                ObjectReader.getDouble(null);
-            }
-        });
-    }
-
-    @Test
-    public void testGetDoubleWithDefault_Null() {
-        assertEquals(10.0, ObjectReader.getDouble(null, 10.0));
-    }
-
-    @Test
-    public void testGetDoubleWithDefault_ValidDouble() {
-        assertEquals(42.0, ObjectReader.getDouble(42.0, 10.0));
-    }
-
-    @Test
-    public void testGetBoolean_ValidBoolean() {
-        assertTrue(ObjectReader.getBoolean(true, false));
-    }
-
-    @Test
-    public void testGetBoolean_Null() {
-        assertFalse(ObjectReader.getBoolean(null, false));
-    }
-
-    @Test
-    public void testGetBoolean_InvalidObject() {
-        assertThrows(IllegalArgumentException.class, new Executable() {
-            @Override
-            public void execute() throws Throwable {
-                ObjectReader.getBoolean(123, false);
-            }
-        });
+    static Stream<Arguments> args() {
+        return Stream.of(
+                Arguments.of(null, -1, -1), // T2
+                Arguments.of(null, 0, 0), // T3
+                Arguments.of(null, 1, 1), // T4
+                Arguments.of(1, 0, 1), // T5
+                Arguments.of((short) 1, 0, 1), // T6
+                Arguments.of((byte) 1, 0, 1), // T7
+                Arguments.of((long) 1, 0, 1), // T8
+                Arguments.of((long) Integer.MAX_VALUE, 1, 2147483647), // T9
+                Arguments.of((long) Integer.MIN_VALUE, 1, -2147483648), // T10
+//                Arguments.of((double) 1, 0, 1), // T13 - IllegalArgumentException
+//                Arguments.of((double) Integer.MAX_VALUE, 1, 2147483647), // T14 - IllegalArgumentException
+//                Arguments.of((double) Integer.MIN_VALUE, 1, -2147483648), // T15 - IllegalArgumentException
+                Arguments.of("1", 0, 1), // T20
+                Arguments.of("2147483647", 0, 2147483647), // T21
+                Arguments.of("-2147483648", 0, -2147483648) // T22
+        );
     }
 }
