@@ -347,9 +347,11 @@
                         <configuration>
                             <targetClasses>
                                 <param>org.apache.storm.utils.ObjectReader</param>
+                                <param>org.apache.storm.topology.TopologyBuilder</param>
                             </targetClasses>
                             <targetTests>
                                 <param>ObjectReaderTest</param>
+                                <param>TopologyBuilderTest</param>
                             </targetTests>
                             <avoidCallsTo>
                                 <avoidCallsTo>org.slf4j</avoidCallsTo>
