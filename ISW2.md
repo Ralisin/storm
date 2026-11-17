@@ -13,7 +13,8 @@ Classi d'esame (task 5.1):
 | Strumento | Versione usata | Note |
 |---|---|---|
 | JDK | Azul Zulu 21.0.12.1 (`/Library/Java/JavaVirtualMachines/zulu-21.jdk`) | STORM 2.7.1 compila per Java 11; la CI ufficiale usa JDK 17 e 21 |
-| Maven | 3.10.0 (locale), 3.6.3 (CI) | la CI ufficiale fissa 3.6.3 per il blocco dei repository `http://` di Maven ≥ 3.8.1; in locale con 3.10 non si è presentato |
+| Maven | 3.10.0 (locale); nella CI del branch quella del runner | la CI ufficiale fissa 3.6.3 per il blocco dei repository `http://` di Maven ≥ 3.8.1; con 3.10 non si è presentato |
+| Python 3 | 3.11.9 (locale), 3.11 (CI del branch) | `storm-client` esegue nella fase `test` i test Python di `bin/storm.py` (`test_storm_cli.py`); con Python più recenti `test_jar_command` fallisce per un diverso ordinamento degli argomenti di `argparse` (la CI ufficiale fissa 3.10) |
 
 Il JDK di default di Homebrew (`/opt/homebrew/opt/java`) segue gli aggiornamenti: usare sempre JDK 21.
 

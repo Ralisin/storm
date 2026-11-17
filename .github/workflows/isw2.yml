@@ -28,9 +28,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      # storm-client runs the Python tests of bin/storm.py in the test phase; newer Python versions change the
+      # argparse ordering they check (the upstream CI pins 3.10, the local build uses 3.11)
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -45,7 +51,7 @@ jobs:
           -Dtest='UIHelpersTest,JoinProcessorTest,CoGroupByKeyProcessorTest' -Dsurefire.failIfNoSpecifiedTests=false
       - name: Upload the test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: surefire-reports
           path: '**/target/surefire-reports/'
