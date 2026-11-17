@@ -1,0 +1,51 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# ISW2 2026/27: build and tests of the modules of the two exam classes (UIHelpers in storm-webapp,
+# BaseProcessor in storm-client), same steps as the local build described in ISW2.md
+name: ISW2 build
+
+on:
+  push:
+    branches: [ "isw2-2026" ]
+  pull_request:
+    branches: [ "isw2-2026" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Install the shaded dependencies
+        run: mvn clean install --batch-mode -pl storm-shaded-deps -am
+      - name: Build storm-client and storm-webapp
+        run: mvn install --batch-mode -DskipTests -pl storm-client,storm-webapp -am
+      - name: Run the tests
+        run: >-
+          mvn verify --batch-mode -pl storm-client,storm-webapp
+          -Dtest='UIHelpersTest,JoinProcessorTest,CoGroupByKeyProcessorTest' -Dsurefire.failIfNoSpecifiedTests=false
+      - name: Upload the test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: '**/target/surefire-reports/'
